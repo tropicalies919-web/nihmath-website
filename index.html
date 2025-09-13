@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nihmath Digital Platform</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: url("PIC.jpg") no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ✅ Fullscreen Login */
+    #loginScreen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 3000;
+    }
+    #loginBox {
+      background: white;
+      color: black;
+      padding: 30px;
+      border-radius: 12px;
+      width: 300px;
+      text-align: center;
+    }
+    #loginBox h2 { margin-bottom: 15px; }
+    #loginBox input {
+      width: 90%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    #loginBox button {
+      background: orange;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      width: 100%;
+    }
+    #loginBox button:hover {
+      background: gold;
+    }
+
+    /* ✅ Navbar */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 15px;
+      z-index: 1000;
+    }
+    .navbar button {
+      background: orange;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    .navbar button:hover {
+      background: gold;
+    }
+
+    /* ✅ Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -250px;
+      width: 250px;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      padding-top: 60px;
+      transition: left 0.3s;
+      z-index: 1100;
+    }
+    .sidebar a {
+      display: block;
+      color: white;
+      padding: 15px;
+      text-decoration: none;
+      font-size: 1.2em;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .sidebar a:hover {
+      background: rgba(255,165,0,0.8);
+    }
+    .hamburger {
+      font-size: 1.8em;
+      cursor: pointer;
+      color: white;
+      background: none;
+      border: none;
+    }
+
+    /* ✅ Content container */
+    .container {
+      background: rgba(0,0,0,0.7);
+      margin: 100px auto 40px auto;
+      padding: 20px;
+      border-radius: 15px;
+      width: 80%;
+      max-width: 900px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2em;
+      margin-bottom: 15px;
+      color: orange;
+    }
+    .quote {
+      font-style: italic;
+      margin-bottom: 15px;
+      font-size: 1.1em;
+    }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+    }
+    .buttons button {
+      flex: 1 1 120px;
+      min-width: 120px;
+      max-width: 200px;
+      padding: 12px 20px;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      background: orange;
+      color: black;
+      font-weight: bold;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .buttons button:hover {
+      transform: scale(1.05);
+      background: gold;
+    }
+    img.logo {
+      width: 300px;
+      max-width: 40%;
+      margin-bottom: 15px;
+    }
+
+    /* ✅ Footer */
+    .footer {
+      background: rgba(0,0,0,0.8);
+      padding: 20px;
+      text-align: center;
+      font-size: 0.9em;
+      margin-top: 20px;
+    }
+    .footer p { margin: 5px 0; }
+
+    /* ✅ Hidden Dev Access */
+    .hidden-access {
+      position: fixed;
+      bottom: 10px;
+      left: 15px;
+      font-size: 0.8em;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+    }
+    .hidden-access:hover {
+      color: orange;
+    }
+
+    /* ✅ Modal Popup */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      color: black;
+      padding: 20px;
+      border-radius: 12px;
+      width: 300px;
+      text-align: center;
+    }
+    .modal-content h2 { margin-bottom: 15px; }
+    .modal-content input {
+      width: 90%;
+      padding: 8px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .modal-content button {
+      background: orange;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .modal-content button:hover {
+      background: gold;
+    }
+
+    /* ✅ Floating Buttons */
+    .lang-btn {
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+      padding: 10px 20px;
+      font-size: 1em;
+      background: teal;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+    .lang-btn:hover {
+      background: darkcyan;
+    }
+    .whatsapp-btn {
+      position: fixed;
+      bottom: 80px;
+      right: 15px;
+      background-color: #25D366;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+      z-index: 1000;
+      transition: transform 0.2s;
+    }
+    .whatsapp-btn:hover {
+      transform: scale(1.1);
+      background-color: #1ebe5d;
+    }
+    .whatsapp-btn img {
+      width: 35px;
+      height: 35px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ✅ LOGIN SCREEN -->
+  <div id="loginScreen">
+    <div id="loginBox">
+      <h2>Login</h2>
+      <input type="text" id="siteUser" placeholder="Username">
+      <input type="password" id="sitePass" placeholder="Password">
+      <button onclick="siteLogin()">Login</button>
+    </div>
+  </div>
+
+  <!-- ✅ MAIN CONTENT (Hidden until login) -->
+  <div id="mainContent" style="display:none;">
+    <!-- ✅ Navbar -->
+    <div class="navbar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <button id="specialBtn" onclick="location.href='offers.html'">Special Offers</button>
+    </div>
+
+    <!-- ✅ Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <a href="offers.html" id="orderBtn">Order / Purchase</a>
+      <a href="about.html" id="aboutBtn">About Us</a>
+    </div>
+
+    <div class="container">
+      <img src="NIH.png" alt="Company Logo" class="logo">
+      <h1 id="heading">Welcome to Nihmath Digital Platform</h1>
+      <p class="quote" id="quote1">“Leading food packaging and distribution company in Riyadh.”</p>
+      <p class="quote" id="quote2">“Super-fast delivery within hours or the same day, depending on your location.”</p>
+      <p class="quote" id="quote3">“Packed with care, delivered with trust.”</p>
+
+      <div class="buttons">
+        <button id="btn1" onclick="location.href='dalls.html'">Dalls</button>
+        <button id="btn2" onclick="location.href='nuts.html'">Nuts</button>
+        <button id="btn3" onclick="location.href='spices.html'">Spices</button>
+      </div>
+    </div>
+
+    <!-- ✅ Footer -->
+    <div class="footer">
+      <p>CR: 1010505416 | License No: 450513926581</p>
+      <p>PO Box: 1083 | Postal Code: 11365 - Riyadh, Kingdom of Saudi Arabia</p>
+      <p>🇸🇦 Product from Kingdom of Saudi Arabia</p>
+      <p>السجل التجاري: 1010505416 | رقم الترخيص: 450513926581</p>
+      <p>ص.ب: 1083 | الرمز البريدي: 11365 - الرياض، المملكة العربية السعودية</p>
+      <p>🇸🇦 منتجات من المملكة العربية السعودية</p>
+    </div>
+
+    <!-- ✅ Hidden Dev Access -->
+    <div class="hidden-access" onclick="openDevPopup()">Nihmath Foods</div>
+
+    <!-- ✅ Modal for Dev Login -->
+    <div class="modal" id="loginModal">
+      <div class="modal-content">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="checkLogin()">Login</button>
+        <button onclick="closeDevPopup()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- ✅ WhatsApp Button -->
+    <a href="https://wa.me/966535426619?text=Hi%20sir" target="_blank" rel="noopener noreferrer" class="whatsapp-btn">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
+    </a>
+
+    <button class="lang-btn" onclick="toggleLang()" id="langBtn">عربي</button>
+  </div>
+
+  <script>
+    let currentLang = localStorage.getItem("lang") || null;
+
+    const translations = {
+      en: {
+        heading: "Welcome to Nihmath Digital Platform",
+        quote1: "“Leading food packaging and distribution company in Riyadh.”",
+        quote2: "“Super-fast delivery within hours or the same day, depending on your location.”",
+        quote3: "“Packed with care, delivered with trust.”",
+        btn1: "Dalls",
+        btn2: "Nuts",
+        btn3: "Spices",
+        langBtn: "عربي",
+        specialBtn: "Special Offers",
+        orderBtn: "Order / Purchase",
+        aboutBtn: "About Us"
+      },
+      ar: {
+        heading: "مرحباً بكم في المنصة الرقمية نغمات الأرض",
+        quote1: "“الشركة الرائدة في تعبئة وتوزيع المواد الغذائية في الرياض”",
+        quote2: "“توصيل سريع جداً خلال ساعات أو في نفس اليوم حسب موقع الطلب.”",
+        quote3: "“نعبئ بعناية ونوصّل بثقة.”",
+        btn1: "البقوليات",
+        btn2: "المكسرات",
+        btn3: "التوابل",
+        langBtn: "ENG",
+        specialBtn: "العروض الخاصة",
+        orderBtn: "طلب / شراء",
+        aboutBtn: "معلومات عنا"
+      }
+    };
+
+    function applyTranslations() {
+      const t = translations[currentLang];
+      document.getElementById("heading").innerText = t.heading;
+      document.getElementById("quote1").innerText = t.quote1;
+      document.getElementById("quote2").innerText = t.quote2;
+      document.getElementById("quote3").innerText = t.quote3;
+      document.getElementById("btn1").innerText = t.btn1;
+      document.getElementById("btn2").innerText = t.btn2;
+      document.getElementById("btn3").innerText = t.btn3;
+      document.getElementById("langBtn").innerText = t.langBtn;
+      document.getElementById("specialBtn").innerText = t.specialBtn;
+      document.getElementById("orderBtn").innerText = t.orderBtn;
+      document.getElementById("aboutBtn").innerText = t.aboutBtn;
+      document.body.style.direction = currentLang === "ar" ? "rtl" : "ltr";
+    }
+
+    function toggleLang() {
+      currentLang = currentLang === "en" ? "ar" : "en";
+      localStorage.setItem("lang", currentLang);
+      applyTranslations();
+    }
+
+    function detectLanguage() {
+      if (!currentLang) {
+        const browserLang = navigator.language || navigator.userLanguage;
+        currentLang = browserLang.startsWith("ar") ? "ar" : "en";
+        localStorage.setItem("lang", currentLang);
+      }
+      applyTranslations();
+    }
+
+    // ✅ Site Login
+    function siteLogin() {
+      let u = document.getElementById("siteUser").value.trim();
+      let p = document.getElementById("sitePass").value.trim();
+      if (u === "Anees" && p === "Nih@7040") {
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("mainContent").style.display = "block";
+      } else {
+        alert("❌ Invalid Username or Password!");
+      }
+    }
+
+    // ✅ Dev Popup
+    function openDevPopup() {
+      document.getElementById("loginModal").style.display = "flex";
+    }
+    function closeDevPopup() {
+      document.getElementById("loginModal").style.display = "none";
+    }
+    function checkLogin() {
+      let user = document.getElementById("username").value.trim();
+      let pass = document.getElementById("password").value.trim();
+      if (user === "SadakWithNihmath2020" && pass === "UA@2255.Online/KSA") {
+        window.location.href = "admin.html";
+      } else {
+        alert("❌ Invalid Username or Password!");
+      }
+    }
+
+    // ✅ Sidebar Toggle
+    function toggleSidebar() {
+      const sidebar = document.getElementById("sidebar");
+      sidebar.style.left = (sidebar.style.left === "0px") ? "-250px" : "0px";
+    }
+
+    detectLanguage();
+  </script>
+</body>
+</html>

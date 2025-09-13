@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spices - Nihmath</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: url("PIC.jpg") no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      text-align: center;
+    }
+    .content {
+      background: rgba(0,0,0,0.7);
+      margin: 40px;
+      padding: 25px;
+      border-radius: 12px;
+    }
+    h1 { margin-bottom: 10px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      color: black;
+    }
+    th, td { padding: 10px; border: 1px solid #ddd; }
+    th { background: orange; }
+    img {
+      width: 80px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    img:hover { transform: scale(1.1); }
+    a, .purchase-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: orange;
+      color: black;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .purchase-btn { background: green; color: white; }
+    .purchase-btn:hover { background: darkgreen; }
+    .filters { 
+      margin: 20px 0; 
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+    .filters input {
+      padding: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+    .filters button {
+      padding: 6px 12px;
+      background: orange;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 20px;
+    }
+    .modal img {
+      max-width: 500px;
+      max-height: 60%;
+      border-radius: 10px;
+      box-shadow: 0 0 20px black;
+      margin-bottom: 15px;
+    }
+    .modal span {
+      position: absolute;
+      top: 20px;
+      right: 35px;
+      color: white;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .modal .info { color: white; font-size: 1.2em; margin-top: 10px; }
+    .modal .desc { color: #ddd; font-size: 1em; margin-top: 8px; max-width: 600px; }
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.3);
+      border: none;
+      font-size: 2em;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 50%;
+      color: white;
+    }
+    #prevBtn { left: 30px; }
+    #nextBtn { right: 30px; }
+    .lang-btn {
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+      padding: 10px 20px;
+      font-size: 1em;
+      background: teal;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .lang-btn:hover { background: darkcyan; }
+    .cart-btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: teal;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .cart-btn:hover { background: darkcyan; }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <h1 id="title">Spices</h1>
+    <p id="subtitle">Premium quality spices sourced from trusted farms.</p>
+
+    <div class="filters">
+      <input type="text" id="searchBox" placeholder="Search products...">
+      <input type="number" id="minPrice" placeholder="Min Price">
+      <input type="number" id="maxPrice" placeholder="Max Price">
+      <button onclick="applyFilters()" id="filterBtn">Filter</button>
+      <button onclick="resetFilters()" id="resetBtn">Reset</button>
+      <a href="offers.html" class="purchase-btn" id="purchaseBtn">🛒 Purchase Items</a>
+    </div>
+
+    <table id="productTable">
+      <thead>
+        <tr>
+          <th id="imgCol">Image</th>
+          <th id="nameCol">Product</th>
+          <th id="priceCol">Price (SAR)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <a href="index.html" id="backBtn">⬅ Back to Home</a>
+  </div>
+
+  <!-- Modal -->
+  <div id="imgModal" class="modal">
+    <span onclick="closeModal()">&times;</span>
+    <button class="nav-btn" id="prevBtn" onclick="changeImage(-1)">&#10094;</button>
+    <img id="modalImg" src="" alt="">
+    <button class="nav-btn" id="nextBtn" onclick="changeImage(1)">&#10095;</button>
+    <div class="info" id="modalInfo"></div>
+    <div class="desc" id="modalDesc"></div>
+    <button class="cart-btn" onclick="addToCart()" id="cartBtn">🛒 Add to Cart</button>
+  </div>
+
+  <button class="lang-btn" onclick="toggleLang()" id="langBtn">عربي</button>
+
+  <script>
+    const DB_NAME = "products";  
+    let allProducts = JSON.parse(localStorage.getItem(DB_NAME)) || [];
+    let products = allProducts.filter(p => p.category === "Spices");
+
+    let currentLang = localStorage.getItem("lang") || "en";
+    let currentImages = [];
+    let currentIndex = 0;
+    let currentProduct = null;
+
+    const translations = {
+      en: {
+        title: "Spices",
+        subtitle: "Premium quality spices sourced from trusted farms.",
+        filterBtn: "Filter",
+        resetBtn: "Reset",
+        imgCol: "Image",
+        nameCol: "Product",
+        priceCol: "Price (SAR)",
+        backBtn: "⬅ Back to Home",
+        langBtn: "عربي",
+        purchaseBtn: "🛒 Purchase Items",
+        cartBtn: "🛒 Add to Cart"
+      },
+      ar: {
+        title: "البقوليات",
+        subtitle: "بقوليات عالية الجودة من مزارع موثوقة.",
+        filterBtn: "تصفية",
+        resetBtn: "إعادة",
+        imgCol: "صورة",
+        nameCol: "المنتج",
+        priceCol: "السعر (ريال)",
+        backBtn: "⬅ العودة إلى الرئيسية",
+        langBtn: "ENG",
+        purchaseBtn: "🛒 شراء المنتجات",
+        cartBtn: "🛒 أضف إلى السلة"
+      }
+    };
+
+    function applyTranslations() {
+      const t = translations[currentLang];
+      document.getElementById("title").innerText = t.title;
+      document.getElementById("subtitle").innerText = t.subtitle;
+      document.getElementById("filterBtn").innerText = t.filterBtn;
+      document.getElementById("resetBtn").innerText = t.resetBtn;
+      document.getElementById("imgCol").innerText = t.imgCol;
+      document.getElementById("nameCol").innerText = t.nameCol;
+      document.getElementById("priceCol").innerText = t.priceCol;
+      document.getElementById("backBtn").innerText = t.backBtn;
+      document.getElementById("langBtn").innerText = t.langBtn;
+      document.getElementById("purchaseBtn").innerText = t.purchaseBtn;
+      document.getElementById("cartBtn").innerText = t.cartBtn;
+      document.body.style.direction = currentLang === "ar" ? "rtl" : "ltr";
+      renderTable(products);
+    }
+
+    function toggleLang() {
+      currentLang = currentLang === "en" ? "ar" : "en";
+      localStorage.setItem("lang", currentLang);
+      applyTranslations();
+    }
+
+    function renderTable(data) {
+      const tableBody = document.querySelector("#productTable tbody");
+      tableBody.innerHTML = "";
+      if (data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="3">⚠️ No products found</td></tr>`;
+        return;
+      }
+      data.forEach((p, idx) => {
+        let displayName = currentLang === "ar" ? (p.name_ar || p.name_en) : p.name_en;
+        let primaryImg = p.images ? p.images[0] : "";
+        let row = `
+          <tr>
+            <td><img src="${primaryImg}" alt="${displayName}" onclick='openModal(${idx})'></td>
+            <td onclick='openModal(${idx})' style="cursor:pointer">${displayName}</td>
+            <td>${p.price}</td>
+          </tr>
+        `;
+        tableBody.innerHTML += row;
+      });
+    }
+
+    function applyFilters() {
+      let search = document.getElementById("searchBox").value.toLowerCase();
+      let min = parseFloat(document.getElementById("minPrice").value) || 0;
+      let max = parseFloat(document.getElementById("maxPrice").value) || Infinity;
+      let filtered = products.filter(p => {
+        let displayName = currentLang === "ar" ? (p.name_ar || p.name_en) : p.name_en;
+        return displayName.toLowerCase().includes(search) &&
+               parseFloat(p.price) >= min &&
+               parseFloat(p.price) <= max;
+      });
+      renderTable(filtered);
+    }
+
+    function resetFilters() {
+      document.getElementById("searchBox").value = "";
+      document.getElementById("minPrice").value = "";
+      document.getElementById("maxPrice").value = "";
+      renderTable(products);
+    }
+
+    function openModal(index) {
+      currentProduct = products[index];
+      currentImages = currentProduct.images || [];
+      currentIndex = 0;
+      document.getElementById("imgModal").style.display = "flex";
+      updateModal();
+    }
+
+    function updateModal() {
+      if (!currentImages.length) return;
+      document.getElementById("modalImg").src = currentImages[currentIndex];
+      let displayName = currentLang === "ar" ? (currentProduct.name_ar || currentProduct.name_en) : currentProduct.name_en;
+      let desc = currentLang === "ar" ? (currentProduct.desc_ar || "") : (currentProduct.desc_en || "");
+      document.getElementById("modalInfo").textContent = `${displayName} - SAR ${currentProduct.price}`;
+      document.getElementById("modalDesc").textContent = desc;
+    }
+
+    function changeImage(step) {
+      if (!currentImages.length) return;
+      currentIndex = (currentIndex + step + currentImages.length) % currentImages.length;
+      updateModal();
+    }
+
+    function closeModal() {
+      document.getElementById("imgModal").style.display = "none";
+    }
+
+    function addToCart() {
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+      let existing = cart.find(item => item.id === currentProduct.id);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({
+          id: currentProduct.id,
+          name_en: currentProduct.name_en,
+          name_ar: currentProduct.name_ar,
+          price: currentProduct.price,
+          image: currentProduct.images[0],
+          quantity: 1
+        });
+      }
+      localStorage.setItem("cart", JSON.stringify(cart));
+      alert(currentLang === "en" ? "Added to Cart!" : "تمت الإضافة إلى السلة!");
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById("imgModal");
+      if (event.target === modal) closeModal();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      applyTranslations();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Developer Panel - Nihmath</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: white; text-align: center; }
+    .admin-container { background: rgba(255,255,255,0.08); margin: 30px auto; padding: 22px; border-radius: 12px; width: 90%; max-width:1000px; }
+    h1 { color: orange; }
+    form { margin-top: 16px; text-align:left; }
+    label { display:block; margin-top:10px; font-weight:bold; }
+    input, select, textarea { padding:10px; margin-top:5px; border-radius:6px; border:none; width:100%; box-sizing:border-box; }
+    textarea{ min-height:70px; resize: vertical;}
+    .controls { margin-top:12px; }
+    button { padding:10px 16px; margin-right:8px; border-radius:8px; border:none; cursor:pointer; background:orange; color:black; font-weight:bold; }
+    button:hover{ background:gold; }
+    .preview img { margin:6px; max-width:110px; border-radius:6px; }
+    .product-list { margin-top:24px; text-align:left; }
+    .product-item { background: rgba(255,255,255,0.06); padding:12px; border-radius:8px; margin-bottom:10px; }
+    .product-item img { width:80px; margin-right:10px; vertical-align:middle; border-radius:6px; }
+    .actions button { margin:6px 6px 0 0; background:teal; color:white; }
+    .delete-btn { background:crimson; color:white; }
+    .meta { font-size:0.9em; color:#ddd; margin-top:6px; }
+    .small { font-size:0.9em; color:#bbb; }
+    .danger { background: #b71c1c; }
+    .helper { color:#bbb; font-size:0.9em; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <h1>Developer Product Upload Panel</h1>
+
+    <form id="productForm">
+      <input type="hidden" id="editIndex" value="">
+
+      <label for="name_en">Product Name (English)</label>
+      <input type="text" id="name_en" required>
+
+      <label for="name_ar">اسم المنتج (Arabic)</label>
+      <input type="text" id="name_ar" required>
+
+      <label for="desc_en">Description (English)</label>
+      <textarea id="desc_en"></textarea>
+
+      <label for="desc_ar">الوصف (Arabic)</label>
+      <textarea id="desc_ar"></textarea>
+
+      <div style="display:flex; gap:12px;">
+        <div style="flex:1">
+          <label for="price">Price (SAR)</label>
+          <input type="number" id="price" required min="0" step="0.01">
+        </div>
+        <div style="width:140px">
+          <label for="stock">Stock</label>
+          <input type="number" id="stock" required min="0" step="1">
+        </div>
+      </div>
+
+      <label for="category">Category</label>
+      <select id="category">
+        <option value="Dalls">Dalls</option>
+        <option value="Nuts">Nuts</option>
+        <option value="Spices">Spices</option>
+      </select>
+
+      <label for="imageUpload">Upload Product Images (PNG or JPG)</label>
+      <input type="file" id="imageUpload" accept="image/png, image/jpeg" multiple>
+      <div class="preview" id="imagePreview"></div>
+      <div class="helper">Images are compressed/resized automatically to reduce storage use. Prefer smaller images for many products.</div>
+
+      <div class="controls">
+        <button type="submit" id="submitBtn">➕ Add Product</button>
+        <button type="button" id="cancelEdit" class="hidden">❌ Cancel Edit</button>
+        <button type="button" id="clearDB" class="danger" title="Clear stored products">🗑️ Clear DB</button>
+        <span class="small" id="statusMsg"></span>
+      </div>
+    </form>
+
+    <div class="product-list" id="productList">
+      <h2>📦 Uploaded Products</h2>
+      <div id="productsContainer" ></div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <button onclick="location.href='index.html'">⬅ Back to Home</button>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const DB_NAME = "products"; // same key used by offers/dalls pages
+    const MAX_DIMENSION = 1200; // px
+    let JPEG_QUALITY = 0.82; // starting quality for compression (reduced automatically on quota)
+    let products = JSON.parse(localStorage.getItem(DB_NAME)) || [];
+
+    // DOM
+    const form = document.getElementById('productForm');
+    const imageUpload = document.getElementById('imageUpload');
+    const imagePreview = document.getElementById('imagePreview');
+    const productsContainer = document.getElementById('productsContainer');
+    const editIndexInput = document.getElementById('editIndex');
+    const submitBtn = document.getElementById('submitBtn');
+    const cancelEditBtn = document.getElementById('cancelEdit');
+    const clearDBBtn = document.getElementById('clearDB');
+    const statusMsg = document.getElementById('statusMsg');
+
+    let pendingImages = []; // base64 data URLs for the current form
+
+    // read file -> DataURL
+    function readFileAsDataURL(file){
+      return new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = e => res(e.target.result);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // compress a dataURL using canvas (returns JPEG dataURL)
+    function compressDataUrl(dataUrl, maxDim=MAX_DIMENSION, quality=JPEG_QUALITY){
+      return new Promise((res, rej) => {
+        const img = new Image();
+        img.onload = () => {
+          let {width:w, height:h} = img;
+          if (w === 0 || h === 0) return rej(new Error('Invalid image'));
+          let newW = w, newH = h;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              newW = maxDim;
+              newH = Math.round(h * (maxDim / w));
+            } else {
+              newH = maxDim;
+              newW = Math.round(w * (maxDim / h));
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = newW;
+          canvas.height = newH;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, newW, newH);
+          try {
+            const out = canvas.toDataURL('image/jpeg', quality);
+            res(out);
+          } catch (err) { rej(err); }
+        };
+        img.onerror = rej;
+        img.src = dataUrl;
+      });
+    }
+
+    // process FileList -> compressed base64 array
+    async function processFiles(files){
+      const arr = [];
+      // use sequential processing to avoid memory spike
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith('image/')) continue;
+        try {
+          const raw = await readFileAsDataURL(file);
+          // compress and store as JPEG to save space
+          const compressed = await compressDataUrl(raw, MAX_DIMENSION, JPEG_QUALITY);
+          arr.push(compressed);
+        } catch(err){
+          console.error('file processing error', err);
+        }
+      }
+      // reset file input (so same files can be selected again)
+      imageUpload.value = '';
+      return arr;
+    }
+
+    // Update preview area
+    function showPreview(list){
+      imagePreview.innerHTML = '';
+      list.forEach(d => {
+        const img = document.createElement('img');
+        img.src = d;
+        imagePreview.appendChild(img);
+      });
+    }
+
+    // handle image selection
+    imageUpload.addEventListener('change', async (ev) => {
+      statusMsg.textContent = 'Processing images...';
+      try {
+        const processed = await processFiles(ev.target.files);
+        // We replace the pendingImages with newly selected images (user expects replace)
+        pendingImages = processed;
+        showPreview(pendingImages);
+      } catch(e){
+        console.error(e);
+        alert('Error processing images: ' + e.message);
+      } finally {
+        statusMsg.textContent = '';
+      }
+    });
+
+    // Save products to localStorage with quota fallback & recompression attempts
+    async function trySaveProductsWithRetries(maxRetries = 3){
+      try {
+        localStorage.setItem(DB_NAME, JSON.stringify(products));
+        return true;
+      } catch (err) {
+        // if storage quota exceeded, try recompressing all stored images progressively
+        console.warn('Save failed:', err);
+        if (isQuotaError(err) && maxRetries > 0) {
+          statusMsg.textContent = 'Storage full — compressing images and retrying...';
+          // progressively lower quality and retry
+          const qualities = [0.6, 0.45, 0.3];
+          for (const q of qualities) {
+            try {
+              await recompressAllImages(q);
+              localStorage.setItem(DB_NAME, JSON.stringify(products));
+              statusMsg.textContent = '';
+              return true;
+            } catch (err2) {
+              console.warn('Retry with quality', q, 'failed', err2);
+              // continue to next lower quality
+            }
+          }
+        }
+        statusMsg.textContent = '';
+        return false;
+      }
+    }
+
+    // detect quota error
+    function isQuotaError(e){
+      return e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014);
+    }
+
+    // recompress EVERY product image to a lower quality (this modifies products in memory)
+    async function recompressAllImages(newQuality){
+      // delay a tick to let UI update
+      await new Promise(r => setTimeout(r, 50));
+      for (let i = 0; i < products.length; i++){
+        const p = products[i];
+        if (!p.images || p.images.length === 0) continue;
+        const newImages = [];
+        for (const dataUrl of p.images){
+          try {
+            const compressed = await compressDataUrl(dataUrl, Math.min(900, MAX_DIMENSION), newQuality);
+            newImages.push(compressed);
+          } catch(err){
+            // if recompress fails, push the original to avoid data loss
+            console.warn('recompress image failed', err);
+            newImages.push(dataUrl);
+          }
+        }
+        p.images = newImages;
+      }
+    }
+
+    // form submit: add or update
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      statusMsg.textContent = 'Saving product...';
+
+      const index = editIndexInput.value;
+      const productObj = {
+        name_en: document.getElementById('name_en').value.trim(),
+        name_ar: document.getElementById('name_ar').value.trim(),
+        desc_en: document.getElementById('desc_en').value.trim(),
+        desc_ar: document.getElementById('desc_ar').value.trim(),
+        price: parseFloat(document.getElementById('price').value) || 0,
+        stock: parseInt(document.getElementById('stock').value) || 0,
+        category: document.getElementById('category').value,
+        images: Array.isArray(pendingImages) && pendingImages.length > 0 ? [...pendingImages] : []
+      };
+
+      // If editing and no new images were uploaded, keep existing images
+      if (index !== "" && (!productObj.images || productObj.images.length === 0)) {
+        productObj.images = products[index].images ? [...products[index].images] : [];
+      }
+
+      try {
+        if (index === "") {
+          products.push(productObj);
+        } else {
+          products[index] = productObj;
+        }
+
+        const ok = await trySaveProductsWithRetries();
+        if (!ok) {
+          alert('Saving failed — your browser storage is full. Try clearing some products or use smaller images.');
+          // revert last push to avoid inconsistent in-memory products when fail
+          if (index === "") products.pop();
+        } else {
+          alert(index === "" ? '✅ Product Added Successfully!' : '✏️ Product Updated Successfully!');
+          renderProducts();
+          resetForm();
+        }
+      } catch (err){
+        console.error('Unexpected save error', err);
+        alert('Unexpected error: ' + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        statusMsg.textContent = '';
+      }
+    });
+
+    // Reset form (for both new and edit cancel)
+    function resetForm(){
+      form.reset();
+      pendingImages = [];
+      imagePreview.innerHTML = '';
+      editIndexInput.value = '';
+      submitBtn.innerText = '➕ Add Product';
+      cancelEditBtn.classList.add('hidden');
+      // clear file input so same file can be reselected
+      imageUpload.value = '';
+    }
+
+    cancelEditBtn.addEventListener('click', () => {
+      resetForm();
+    });
+
+    // Edit product UI link
+    window.editProduct = function(index){
+      const p = products[index];
+      if (!p) return;
+      document.getElementById('name_en').value = p.name_en || '';
+      document.getElementById('name_ar').value = p.name_ar || '';
+      document.getElementById('desc_en').value = p.desc_en || '';
+      document.getElementById('desc_ar').value = p.desc_ar || '';
+      document.getElementById('price').value = p.price || '';
+      document.getElementById('stock').value = p.stock || '';
+      document.getElementById('category').value = p.category || 'Dalls';
+      pendingImages = [...(p.images || [])]; // keep current images until replaced
+      showPreview(pendingImages);
+      editIndexInput.value = index;
+      submitBtn.innerText = '💾 Save Changes';
+      cancelEditBtn.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior:'smooth' });
+    }
+
+    // Delete product
+    window.deleteProduct = async function(index){
+      if (!confirm('⚠️ Are you sure you want to delete this product?')) return;
+      products.splice(index,1);
+      const ok = await trySaveProductsWithRetries();
+      if (!ok) {
+        alert('Delete succeeded locally but failed to persist (storage issue). Try clearing DB and refresh.');
+      }
+      renderProducts();
+    }
+
+    // render list
+    function renderProducts(){
+      productsContainer.innerHTML = '';
+      if (!products || products.length === 0) {
+        productsContainer.innerHTML = '<p>No products uploaded yet.</p>';
+        return;
+      }
+
+      products.forEach((p, i) => {
+        const first = (p.images && p.images.length>0) ? p.images[0] : '';
+        const imgs = (p.images || []).map(img => `<img src="${img}" alt="preview">`).join('');
+        const html = `
+          <div class="product-item">
+            <div style="display:flex; align-items:center;">
+              ${ first ? `<img src="${first}" alt="${p.name_en||''}">` : '' }
+              <div>
+                <div style="font-weight:bold">${escapeHtml(p.name_en || '')} / ${escapeHtml(p.name_ar || '')}</div>
+                <div class="meta">SAR ${p.price} • Stock: ${p.stock} • ${p.category}</div>
+                <div class="small">${escapeHtml((p.desc_en||'') + (p.desc_ar? ' / ' + p.desc_ar : ''))}</div>
+              </div>
+            </div>
+            <div style="margin-top:8px;">
+              <div>${imgs}</div>
+              <div class="actions">
+                <button onclick="editProduct(${i})">✏️ Edit</button>
+                <button class="delete-btn" onclick="deleteProduct(${i})">🗑️ Delete</button>
+              </div>
+            </div>
+          </div>
+        `;
+        productsContainer.insertAdjacentHTML('beforeend', html);
+      });
+    }
+
+    // Clear DB button
+    clearDBBtn.addEventListener('click', () => {
+      if (!confirm('This will erase ALL products in local storage under key "' + DB_NAME + '". Continue?')) return;
+      products = [];
+      localStorage.removeItem(DB_NAME);
+      renderProducts();
+      resetForm();
+      alert('Database cleared.');
+    });
+
+    // small helper: escape html in output
+    function escapeHtml(s){
+      return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    // initial render
+    renderProducts();
+
+    // Expose a debugging helper in console if needed
+    window.__adminProducts = {
+      get: () => products,
+      forceSave: () => trySaveProductsWithRetries()
+    };
+
+  })();
+  </script>
+</body>
+</html>

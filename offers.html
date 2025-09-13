@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nihmath Al Ardh - Offers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #fafafa; }
+    h1 { text-align: center; color: orange; margin-bottom: 20px; }
+    .filters { text-align: center; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    input, select { padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
+    .section { margin-top: 30px; }
+    .section h2 { color: teal; }
+    .products { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 15px; }
+    .product { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); text-align: center; cursor: pointer; }
+    .product img { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; }
+    .product h3 { margin: 10px 0 5px; font-size: 1.1em; }
+    .product p { margin: 5px 0; }
+    .out-of-stock { color: red; font-weight: bold; }
+    .lang-toggle { position: fixed; top: 10px; right: 10px; padding: 8px 15px; background: teal; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    .add-cart { margin-top: 8px; padding: 8px 12px; background: orange; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .add-cart:hover { background: gold; }
+    .cart-link-top { padding: 8px 15px; background: teal; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; }
+    .cart-link-top:hover { background: darkcyan; }
+    .sr-only { position: absolute; left: -9999px; }
+
+    /* Modal Styles */
+    .modal {
+      display: none; 
+      position: fixed; 
+      z-index: 1000; 
+      left: 0; top: 0; 
+      width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.9); 
+      justify-content: center; 
+      align-items: center; 
+      flex-direction: column; 
+      text-align: center;
+      color: white;
+      padding: 20px;
+    }
+    .modal img { max-width: 600px; max-height: 60vh; border-radius: 10px; margin-bottom: 15px; }
+    .modal span {
+      position: absolute; top: 20px; right: 35px; 
+      font-size: 40px; font-weight: bold; cursor: pointer; 
+    }
+    .modal .nav-btn {
+      position: absolute; top: 50%;
+      background: rgba(255,255,255,0.3);
+      border: none;
+      font-size: 2em;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 50%;
+      color: white;
+    }
+    #prevBtn { left: 30px; }
+    #nextBtn { right: 30px; }
+    .modal .info { margin-top: 10px; font-size: 1.2em; }
+    .modal .desc { margin-top: 8px; font-size: 1em; color: #ddd; max-width: 600px; }
+  </style>
+</head>
+<body>
+  <h1 id="pageTitle">🛒 Nihmath Al Ardh - Special Offers</h1>
+
+  <!-- Language Toggle -->
+  <button class="lang-toggle" onclick="toggleLang()" id="langBtn">عربي</button>
+
+  <div class="filters">
+    <label for="filterCategory" class="sr-only">Filter products</label>
+    <input type="text" id="search" placeholder="🔍 Search products...">
+    <select id="filterCategory" aria-label="Filter products by category">
+      <option value="all">All Categories</option>
+      <option value="Dalls">Dalls</option>
+      <option value="Nuts">Nuts</option>
+      <option value="Spices">Spices</option>
+    </select>
+    <a href="cart.html" class="cart-link-top">🛒 View Cart</a>
+  </div>
+
+  <div id="offersContainer"></div>
+
+  <!-- Modal for product details -->
+  <div id="productModal" class="modal">
+    <span onclick="closeModal()">&times;</span>
+    <button class="nav-btn" id="prevBtn" onclick="changeImage(-1)">&#10094;</button>
+    <img id="modalImg" src="" alt="">
+    <button class="nav-btn" id="nextBtn" onclick="changeImage(1)">&#10095;</button>
+    <div class="info" id="modalInfo"></div>
+    <div class="desc" id="modalDesc"></div>
+  </div>
+
+  <script>
+    let currentLang = localStorage.getItem("lang") || "en";
+    let currentProduct = null;
+    let currentImages = [];
+    let currentIndex = 0;
+
+    // ✅ Sample products (only saved if none exist)
+    const sampleProducts = [
+      {
+        name_en: "Red Lentils",
+        name_ar: "عدس أحمر",
+        category: "Dalls",
+        price: 15,
+        stock: 10,
+        images: ["https://via.placeholder.com/200x160?text=Red+Lentils"],
+        desc_en: "High-quality red lentils.",
+        desc_ar: "عدس أحمر عالي الجودة."
+      },
+      {
+        name_en: "Cashew Nuts",
+        name_ar: "كاجو",
+        category: "Nuts",
+        price: 45,
+        stock: 5,
+        images: ["https://via.placeholder.com/200x160?text=Cashew+Nuts"],
+        desc_en: "Fresh cashew nuts.",
+        desc_ar: "كاجو طازج."
+      },
+      {
+        name_en: "Black Pepper",
+        name_ar: "فلفل أسود",
+        category: "Spices",
+        price: 20,
+        stock: 8,
+        images: ["https://via.placeholder.com/200x160?text=Black+Pepper"],
+        desc_en: "Strong aromatic black pepper.",
+        desc_ar: "فلفل أسود عطري قوي."
+      }
+    ];
+
+    if (!localStorage.getItem("products")) {
+      localStorage.setItem("products", JSON.stringify(sampleProducts));
+    }
+
+    const translations = {
+      en: {
+        title: "🛒 Nihmath Al Ardh - Special Offers",
+        searchPlaceholder: "🔍 Search products...",
+        allCategories: "All Categories",
+        categories: { Dalls: "Dalls", Nuts: "Nuts", Spices: "Spices" },
+        price: "Price",
+        inStock: "In Stock",
+        outOfStock: "Out of Stock",
+        addCart: "Add to Cart",
+        viewCart: "🛒 View Cart"
+      },
+      ar: {
+        title: "🛒 عروض نغمات الأرض",
+        searchPlaceholder: "🔍 ابحث عن المنتجات...",
+        allCategories: "كل الأقسام",
+        categories: { Dalls: "البقوليات", Nuts: "المكسرات", Spices: "التوابل" },
+        price: "السعر",
+        inStock: "متوفر",
+        outOfStock: "غير متوفر",
+        addCart: "أضف للسلة",
+        viewCart: "🛒 عرض السلة"
+      }
+    };
+
+    const offersContainer = document.getElementById("offersContainer");
+    const searchInput = document.getElementById("search");
+    const filterCategory = document.getElementById("filterCategory");
+    const pageTitle = document.getElementById("pageTitle");
+    const langBtn = document.getElementById("langBtn");
+    const cartLinkTop = document.querySelector(".cart-link-top");
+
+    function applyTranslations() {
+      const t = translations[currentLang];
+      pageTitle.innerText = t.title;
+      searchInput.placeholder = t.searchPlaceholder;
+      filterCategory.options[0].text = t.allCategories;
+      filterCategory.options[1].text = t.categories.Dalls;
+      filterCategory.options[2].text = t.categories.Nuts;
+      filterCategory.options[3].text = t.categories.Spices;
+      langBtn.innerText = currentLang === "en" ? "عربي" : "ENG";
+      updateCartCount();
+      document.body.style.direction = currentLang === "ar" ? "rtl" : "ltr";
+    }
+
+    function toggleLang() {
+      currentLang = currentLang === "en" ? "ar" : "en";
+      localStorage.setItem("lang", currentLang);
+      renderProducts();
+      applyTranslations();
+    }
+
+    function addToCart(index) {
+      const products = JSON.parse(localStorage.getItem("products")) || [];
+      const product = products[index];
+      if (!product) return;
+
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+      const existing = cart.find(item => item.name_en === product.name_en);
+
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({
+          id: Date.now(),
+          name_en: product.name_en,
+          name_ar: product.name_ar,
+          price: product.price,
+          quantity: 1,
+          img: product.images && product.images.length > 0 ? product.images[0] : "https://via.placeholder.com/200x160?text=No+Image"
+        });
+      }
+
+      localStorage.setItem("cart", JSON.stringify(cart));
+      updateCartCount();
+      alert(currentLang === "en" ? "✅ Added to Cart!" : "✅ تمت الإضافة للسلة!");
+    }
+
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem("cart")) || [];
+      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const t = translations[currentLang];
+      cartLinkTop.innerText = `${t.viewCart} (${count})`;
+    }
+
+    function renderProducts() {
+      const products = JSON.parse(localStorage.getItem("products")) || [];
+      const search = searchInput.value.toLowerCase();
+      const filter = filterCategory.value;
+      const t = translations[currentLang];
+
+      const grouped = { Dalls: [], Nuts: [], Spices: [] };
+
+      products.forEach((p, index) => {
+        const name = currentLang === "en" ? p.name_en : p.name_ar;
+        if ((filter === "all" || p.category === filter) && name.toLowerCase().includes(search)) {
+          grouped[p.category].push({ ...p, index });
+        }
+      });
+
+      offersContainer.innerHTML = "";
+      for (let category in grouped) {
+        if (grouped[category].length > 0) {
+          const section = document.createElement("div");
+          section.classList.add("section");
+          section.innerHTML = `<h2>${t.categories[category]}</h2>`;
+          const grid = document.createElement("div");
+          grid.classList.add("products");
+
+          grouped[category].forEach(p => {
+            const name = currentLang === "en" ? p.name_en : p.name_ar;
+            const firstImage = (p.images && p.images.length > 0) ? p.images[0] : "https://via.placeholder.com/200x160?text=No+Image";
+
+            const item = document.createElement("div");
+            item.classList.add("product");
+            item.innerHTML = `
+              <img src="${firstImage}" alt="${name}">
+              <h3>${name}</h3>
+              <p>${t.price}: ${p.price} SAR</p>
+              <p class="${p.stock && p.stock > 0 ? "" : "out-of-stock"}">
+                ${p.stock && p.stock > 0 ? 
+                  (t.inStock + ": " + p.stock) : t.outOfStock}
+              </p>
+              <button class="add-cart" onclick="event.stopPropagation(); addToCart(${p.index})" ${!p.stock || p.stock === 0 ? "disabled" : ""}>
+                ${t.addCart}
+              </button>
+            `;
+            item.addEventListener("click", () => openModal(p));
+            grid.appendChild(item);
+          });
+
+          section.appendChild(grid);
+          offersContainer.appendChild(section);
+        }
+      }
+    }
+
+    // Modal logic
+    function openModal(product) {
+      currentProduct = product;
+      currentImages = product.images && product.images.length ? product.images : ["https://via.placeholder.com/600x400?text=No+Image"];
+      currentIndex = 0;
+      document.getElementById("productModal").style.display = "flex";
+      updateModal();
+    }
+
+    function updateModal() {
+      document.getElementById("modalImg").src = currentImages[currentIndex];
+      const displayName = currentLang === "ar" ? (currentProduct.name_ar || currentProduct.name_en) : currentProduct.name_en;
+      const desc = currentLang === "ar" ? (currentProduct.desc_ar || "") : (currentProduct.desc_en || "");
+      document.getElementById("modalInfo").textContent = `${displayName} - SAR ${currentProduct.price}`;
+      document.getElementById("modalDesc").textContent = desc;
+    }
+
+    function changeImage(step) {
+      if (!currentImages.length) return;
+      currentIndex = (currentIndex + step + currentImages.length) % currentImages.length;
+      updateModal();
+    }
+
+    function closeModal() {
+      document.getElementById("productModal").style.display = "none";
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById("productModal");
+      if (event.target === modal) closeModal();
+    }
+
+    searchInput.addEventListener("input", renderProducts);
+    filterCategory.addEventListener("change", renderProducts);
+
+    applyTranslations();
+    renderProducts();
+    updateCartCount();
+  </script>
+</body>
+</html>

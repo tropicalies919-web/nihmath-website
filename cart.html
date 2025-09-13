@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>🛒 Nihmath Al Ardh - Cart</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+    h1 { text-align:center; color: orange; }
+    .note { text-align:center; background:#fff3cd; color:#856404; padding:10px; border-radius:6px; margin-bottom:20px; border:1px solid #ffeeba; }
+    .cart-container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+    .cart-item { display:flex; gap:12px; align-items:center; padding:12px; border-bottom:1px solid #ddd; }
+    .cart-item img { width:80px; height:80px; object-fit:cover; border-radius:8px; cursor:pointer; }
+    .cart-details { flex:1; min-width:0; }
+    .cart-details h3 { margin:0; cursor:pointer; }
+    .cart-details p { margin:6px 0; color:#333; }
+    .quantity-controls { display:flex; align-items:center; gap:8px; margin-top:6px; }
+    .quantity-controls button { padding:6px 10px; border:none; border-radius:6px; background:teal; color:#fff; cursor:pointer; }
+    .remove-btn { background:crimson; color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; }
+    .total { text-align:right; font-size:1.1em; margin-top:16px; font-weight:bold; }
+    .checkout { text-align:center; margin-top:18px; }
+    .checkout button { padding:12px 20px; background:teal; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
+    .warning { text-align:center; color:red; margin-top:8px; font-weight:bold; }
+    .back-link { text-align:center; margin-top:18px; }
+    .back-link a { background:orange; color:black; padding:10px 18px; border-radius:8px; text-decoration:none; font-weight:bold; }
+
+    .lang-toggle { position: fixed; top: 10px; right: 10px; padding:8px 12px; background:teal; color:white; border:none; border-radius:6px; cursor:pointer; }
+
+    /* Modal (product detail) */
+    .modal { display:none; position:fixed; inset:0; background: rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:1000; }
+    .modal-inner { background:white; padding:18px; border-radius:10px; max-width:900px; width:95%; max-height:90vh; overflow:auto; text-align:center; position:relative; }
+    .modal .big-img { max-width:100%; max-height:60vh; border-radius:8px; margin-bottom:12px; }
+    .modal .close { position:absolute; top:10px; right:12px; font-size:22px; cursor:pointer; color:#333; background:#eee; padding:6px 8px; border-radius:6px; }
+    .modal .nav { 
+      position:absolute; 
+      top:50%; 
+      transform:translateY(-50%); 
+      font-size:32px; 
+      color:white; 
+      cursor:pointer; 
+      padding:8px; 
+      -webkit-user-select:none; /* Safari */
+      -moz-user-select:none;    /* Firefox */
+      -ms-user-select:none;     /* IE/Edge */
+      user-select:none;         /* Standard */
+    }
+    .modal #prevBtn { left:14px; }
+    .modal #nextBtn { right:14px; }
+    .modal-desc { text-align:left; color:#333; margin-top:8px; }
+
+    /* Popups */
+    .popup { display:none; position:fixed; inset:0; background: rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1100; }
+    .popup .popup-content { background:white; padding:18px; border-radius:8px; width:320px; max-width:90%; text-align:center; }
+    .popup .popup-content input, .popup .popup-content select { width:90%; padding:8px; margin:8px 0; border-radius:6px; border:1px solid #ccc; }
+    .popup .popup-content button { padding:10px 16px; border-radius:6px; border:none; cursor:pointer; font-weight:bold; }
+
+    @media(max-width:560px){ .cart-item{flex-direction:row} .cart-details h3{font-size:16px} }
+  </style>
+</head>
+<body>
+  <button class="lang-toggle" onclick="toggleLang()" id="langBtn">عربي</button>
+  <h1 id="cartTitle">🛒 Your Shopping Cart</h1>
+  <div class="note" id="deliveryNote">📦 Currently delivery only available in Riyadh. Out of Riyadh will be coming soon.</div>
+
+  <div class="cart-container" id="cartContainer"></div>
+
+  <div class="checkout">
+    <button id="checkoutBtn">✅ Checkout</button>
+    <div class="warning" id="warning"></div>
+  </div>
+
+  <div class="back-link">
+    <a href="offers.html" id="backLink">⬅ Back to Offers</a>
+  </div>
+
+  <!-- Product detail modal -->
+  <div id="productModal" class="modal" aria-hidden="true">
+    <div id="prevBtn" class="nav">❮</div>
+    <div id="nextBtn" class="nav">❯</div>
+
+    <div class="modal-inner" role="dialog" aria-modal="true">
+      <div class="close" onclick="closeModal()">✕</div>
+      <img id="modalImage" class="big-img" src="" alt="product image">
+      <h2 id="modalTitle"></h2>
+      <div class="modal-desc">
+        <p id="modalDesc"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup 1: Customer Info -->
+  <div class="popup" id="popup1" aria-hidden="true">
+    <div class="popup-content">
+      <h3 id="detailsTitle">Enter your details</h3>
+      <input type="text" id="custName" placeholder="Your Name">
+      <select id="custCity">
+        <option value="Riyadh">Riyadh</option>
+        <option value="Jeddah">Jeddah</option>
+        <option value="Other">Other</option>
+      </select>
+      <div style="margin-top:10px;">
+        <button id="proceedBtn" style="background:teal;color:white" onclick="proceedOrder()">Proceed</button>
+        <button style="margin-left:8px;" onclick="closePopup('popup1')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup 2: Connect to Salesman -->
+  <div class="popup" id="popup2" aria-hidden="true">
+    <div class="popup-content">
+      <h3 id="connectTitle">Connecting you with our salesman</h3>
+      <p id="connectMsg">For a better experience, you can contact them directly.</p>
+      <div style="margin-top:10px;">
+        <button style="background:#25D366;color:white" onclick="openWhatsApp()">📲 Contact via WhatsApp</button>
+        <button style="margin-left:8px;" onclick="closePopup('popup2')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Keys and placeholders
+    const CART_KEY = 'cart';
+    const PHONE_NUMBER = '966535426619'; // phone for whatsapp (use your number)
+    const PLACEHOLDER = 'https://via.placeholder.com/160?text=No+Image';
+
+    // Load or init
+    let cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+    let total = 0;
+    let currentLang = localStorage.getItem('lang') || 'en';
+    // modal state
+    let modalState = { idx: 0, images: [], title: '', desc: '' };
+
+    const translations = {
+      en: {
+        cartTitle: "🛒 Your Shopping Cart",
+        deliveryNote: "📦 Currently delivery only available in Riyadh. Out of Riyadh will be coming soon.",
+        checkoutBtn: "✅ Checkout",
+        backLink: "⬅ Back to Offers",
+        detailsTitle: "Enter your details",
+        proceedBtn: "Proceed",
+        connectTitle: "Connecting you with our salesman",
+        connectMsg: "For a better experience, you can contact them directly.",
+        whatsappBtn: "📲 Contact via WhatsApp",
+        warning: "⚠ Minimum Purchase is 100 SAR",
+        emptyCart: "🛍️ Your cart is empty.",
+        total: "Total",
+        namePlaceholder: "Your Name"
+      },
+      ar: {
+        cartTitle: "🛒 سلة التسوق الخاصة بك",
+        deliveryNote: "📦 حالياً التوصيل متاح في الرياض فقط. باقي المناطق قريباً.",
+        checkoutBtn: "✅ إتمام الشراء",
+        backLink: "⬅ العودة للعروض",
+        detailsTitle: "أدخل بياناتك",
+        proceedBtn: "متابعة",
+        connectTitle: "جارٍ ربطك مع مندوب المبيعات",
+        connectMsg: "لتحصل على تجربة أفضل، يمكنك التواصل مباشرة.",
+        whatsappBtn: "📲 تواصل عبر واتساب",
+        warning: "⚠ الحد الأدنى للشراء هو 100 ريال",
+        emptyCart: "🛍️ سلة التسوق فارغة.",
+        total: "المجموع",
+        namePlaceholder: "اسمك"
+      }
+    };
+
+    // Utilities
+    function saveCart(){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
+    function toNumber(v){ const n = parseFloat(v); return isFinite(n) ? n : 0; }
+
+    // Robust image getter (supports multiple shapes)
+    function getImageSrc(item){
+      if (!item) return PLACEHOLDER;
+      if (Array.isArray(item.images) && item.images.length>0) return item.images[0];
+      if (item.image) return item.image;
+      if (item.img) return item.img;
+      // fallback: find any string property that looks like an image url/data
+      for (const k of Object.keys(item)){
+        const v = item[k];
+        if (typeof v === 'string' && (v.startsWith('data:image/') || v.startsWith('http') || v.includes('.jpg') || v.includes('.png'))) return v;
+      }
+      return PLACEHOLDER;
+    }
+
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    // Translations
+    function applyTranslations(){
+      const t = translations[currentLang] || translations.en;
+      document.getElementById('cartTitle').innerText = t.cartTitle;
+      document.getElementById('deliveryNote').innerText = t.deliveryNote;
+      document.getElementById('checkoutBtn').innerText = t.checkoutBtn;
+      document.getElementById('backLink').innerText = t.backLink;
+      document.getElementById('detailsTitle').innerText = t.detailsTitle;
+      document.getElementById('connectTitle').innerText = t.connectTitle;
+      document.getElementById('connectMsg').innerText = t.connectMsg;
+      document.getElementById('langBtn').innerText = currentLang === 'en' ? 'عربي' : 'ENG';
+      document.body.style.direction = currentLang === 'ar' ? 'rtl' : 'ltr';
+      document.getElementById('custName').placeholder = t.namePlaceholder;
+    }
+
+    function toggleLang(){
+      currentLang = currentLang === 'en' ? 'ar' : 'en';
+      localStorage.setItem('lang', currentLang);
+      applyTranslations();
+      renderCart();
+    }
+    // expose globally
+    window.toggleLang = toggleLang;
+
+    // Rendering
+    function renderCart(){
+      const container = document.getElementById('cartContainer');
+      container.innerHTML = '';
+      total = 0;
+
+      if (!cart || cart.length === 0) {
+        container.innerHTML = `<p>${translations[currentLang].emptyCart}</p>`;
+        document.getElementById('warning').innerText = '';
+        return;
+      }
+
+      cart.forEach((item, idx) => {
+        const price = toNumber(item.price);
+        const qty = Number(item.quantity) || 1;
+        const itemTotal = price * qty;
+        total += itemTotal;
+        const displayName = currentLang === 'en' ? (item.name_en || item.name_ar || 'Product') : (item.name_ar || item.name_en || 'المنتج');
+        const imgSrc = getImageSrc(item);
+
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'cart-item';
+        itemDiv.innerHTML = `
+          <img data-idx="${idx}" src="${escapeHtml(imgSrc)}" alt="${escapeHtml(displayName)}" onerror="this.onerror=null;this.src='${PLACEHOLDER}';">
+          <div class="cart-details">
+            <h3 data-idx="${idx}">${escapeHtml(displayName)}</h3>
+            <p>SAR ${price.toFixed(2)} × <strong id="qty-${idx}">${qty}</strong> = SAR ${itemTotal.toFixed(2)}</p>
+            <div class="quantity-controls">
+              <button data-idx="${idx}" class="dec">➖</button>
+              <span>${qty}</span>
+              <button data-idx="${idx}" class="inc">➕</button>
+            </div>
+          </div>
+          <div>
+            <button class="remove-btn" data-idx="${idx}">❌</button>
+          </div>
+        `;
+        container.appendChild(itemDiv);
+      });
+
+      const totalDiv = document.createElement('div');
+      totalDiv.className = 'total';
+      totalDiv.innerText = `${translations[currentLang].total}: SAR ${total.toFixed(2)}`;
+      container.appendChild(totalDiv);
+
+      // wire events
+      container.querySelectorAll('.inc').forEach(btn => btn.addEventListener('click', (e) => {
+        changeQuantity(Number(btn.dataset.idx), 1);
+      }));
+      container.querySelectorAll('.dec').forEach(btn => btn.addEventListener('click', (e) => {
+        changeQuantity(Number(btn.dataset.idx), -1);
+      }));
+      container.querySelectorAll('.remove-btn').forEach(btn => btn.addEventListener('click', (e) => {
+        removeFromCart(Number(btn.dataset.idx));
+      }));
+      // open modal on img or title click
+      container.querySelectorAll('img[data-idx], h3[data-idx]').forEach(el => el.addEventListener('click', (e) => {
+        const idx = Number(e.currentTarget.dataset.idx);
+        openProductModal(idx);
+      }));
+    }
+
+    function changeQuantity(index, delta){
+      if (!cart[index]) return;
+      const newQty = (Number(cart[index].quantity) || 1) + delta;
+      if (newQty <= 0) return;
+      cart[index].quantity = newQty;
+      saveCart();
+      renderCart();
+    }
+
+    function removeFromCart(index){
+      if (!cart[index]) return;
+      cart.splice(index, 1);
+      saveCart();
+      renderCart();
+    }
+
+    // Checkout & popups
+    function checkout(){
+      const warningEl = document.getElementById('warning');
+      if (total < 100) {
+        warningEl.innerText = translations[currentLang].warning;
+        return;
+      }
+      warningEl.innerText = '';
+      openPopup('popup1');
+    }
+
+    function openPopup(id){
+      const p = document.getElementById(id);
+      if (!p) return;
+      p.style.display = 'flex';
+      p.setAttribute('aria-hidden','false');
+    }
+    function closePopup(id){
+      const p = document.getElementById(id);
+      if (!p) return;
+      p.style.display = 'none';
+      p.setAttribute('aria-hidden','true');
+    }
+
+    // proceedOrder -> show popup2 with WhatsApp button
+    function proceedOrder(){
+      const name = document.getElementById('custName').value.trim();
+      const city = document.getElementById('custCity').value;
+      if (!name) {
+        alert(currentLang === 'en' ? 'Please enter your name' : 'الرجاء إدخال اسمك');
+        return;
+      }
+      // store temporarily to use in whatsapp message
+      window.__checkoutCustomer = { name, city };
+      closePopup('popup1');
+      openPopup('popup2');
+    }
+
+    // Compose whatsapp message and open
+    function openWhatsApp(){
+      const customer = window.__checkoutCustomer || { name: '', city: '' };
+      let message = currentLang === 'en'
+        ? `Hello, my name is ${customer.name} from ${customer.city}.%0AHere is my order:%0A`
+        : `مرحباً، اسمي ${customer.name} من ${customer.city}.%0Aهذه طلبي:%0A`;
+
+      cart.forEach(item => {
+        const name = currentLang === 'en' ? (item.name_en || item.name_ar) : (item.name_ar || item.name_en);
+        const qty = Number(item.quantity) || 1;
+        const price = toNumber(item.price);
+        message += `- ${name} (${qty} × SAR ${price.toFixed(2)})%0A`;
+      });
+      message += (currentLang === 'en' ? 'Total Amount: SAR ' : 'المبلغ الإجمالي: ') + total.toFixed(2);
+      // open whatsapp
+      const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+      // keep popup2 open or close as you like:
+      // closePopup('popup2');
+    }
+
+    // Product modal functions (slideshow + description)
+    function openProductModal(cartIndex){
+      const item = cart[cartIndex];
+      if (!item) return;
+      const images = Array.isArray(item.images) && item.images.length>0 ? item.images.slice() :
+                     (item.image ? [item.image] : []);
+      modalState.images = images.length ? images : [PLACEHOLDER];
+      modalState.idx = 0;
+      modalState.title = currentLang === 'en' ? (item.name_en || item.name_ar || '') : (item.name_ar || item.name_en || '');
+      modalState.desc = currentLang === 'en' ? (item.desc_en || item.desc_ar || '') : (item.desc_ar || item.desc_en || '');
+      updateModal();
+      const modal = document.getElementById('productModal');
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden','false');
+    }
+
+    function updateModal(){
+      const img = document.getElementById('modalImage');
+      img.src = modalState.images[modalState.idx] || PLACEHOLDER;
+      img.onerror = function(){ this.onerror=null; this.src = PLACEHOLDER; };
+      document.getElementById('modalTitle').innerText = modalState.title || '';
+      document.getElementById('modalDesc').innerText = modalState.desc || '';
+    }
+
+    function changeModalImage(step){
+      if (!modalState.images.length) return;
+      modalState.idx = (modalState.idx + step + modalState.images.length) % modalState.images.length;
+      updateModal();
+    }
+
+    function closeModal(){
+      const modal = document.getElementById('productModal');
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden','true');
+    }
+
+    // Event wiring
+    document.getElementById('checkoutBtn').addEventListener('click', checkout);
+    document.getElementById('prevBtn').addEventListener('click', () => changeModalImage(-1));
+    document.getElementById('nextBtn').addEventListener('click', () => changeModalImage(1));
+    // close modal by clicking backdrop
+    document.getElementById('productModal').addEventListener('click', (e) => { if (e.target.id === 'productModal') closeModal(); });
+    // close popup by clicking backdrop
+    document.getElementById('popup1').addEventListener('click', (e) => { if (e.target.id === 'popup1') closePopup('popup1'); });
+    document.getElementById('popup2').addEventListener('click', (e) => { if (e.target.id === 'popup2') closePopup('popup2'); });
+
+    // keyboard handlers
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+        closePopup('popup1');
+        closePopup('popup2');
+      }
+      if (e.key === 'ArrowLeft') changeModalImage(-1);
+      if (e.key === 'ArrowRight') changeModalImage(1);
+    });
+
+    // initial
+    applyTranslations();
+    renderCart();
+
+    // expose some helpers to window for debugging
+    window.cartDebug = { cart, renderCart, saveCart };
+    // ensure proceedOrder and openWhatsApp are global for inline onclick attributes
+    window.proceedOrder = proceedOrder;
+    window.openWhatsApp = openWhatsApp;
+  </script>
+</body>
+</html>

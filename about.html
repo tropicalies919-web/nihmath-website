@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About - Nihmath Al Ardh</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
+      background: #f5f5f5;
+      color: #333;
+    }
+    /* ✅ Navbar with back button */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0 15px;
+      z-index: 1000;
+    }
+    .navbar button {
+      background: orange;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+      color: black;
+    }
+    .navbar button:hover { background: gold; }
+
+    .container {
+      max-width: 900px;
+      margin: 100px auto 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: orange;
+      margin-bottom: 20px;
+    }
+    p {
+      line-height: 1.8;
+      font-size: 1.1em;
+    }
+    .lang-btn {
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+      padding: 10px 20px;
+      font-size: 1em;
+      background: teal;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+    .lang-btn:hover { background: darkcyan; }
+    .footer {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #ddd;
+      text-align: center;
+      font-size: 0.9em;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <!-- ✅ Navbar -->
+  <div class="navbar">
+    <button onclick="location.href='index.html'" id="homeBtn">🏠 Home</button>
+  </div>
+
+  <div class="container">
+    <h1 id="heading">About Nihmath Al Ardh</h1>
+    <p id="aboutText">
+      Nihmath Al Ardh is a leading food distributing company based in the Kingdom of Saudi Arabia.  
+      With a commitment to quality and trust, we specialize in bringing the best flavors to your table.  
+
+      Our operations cover a wide range of premium products:  
+      • Spices such as Cardamom, Black Pepper, and Cloves.  
+      • Nuts including Cashew, Almonds, and Walnuts.  
+      • Dalls such as Red Dal, Chana Dal, and Black Masoor.  
+
+      We proudly serve the needs of families, retailers, and businesses with products sourced and distributed with care.  
+
+      <br><br>
+      <strong>Company Details:</strong><br>
+      CR: 1010505416 <br>
+      License No: 450513926581 <br>
+      PO Box: 1083, Postal Code 11365 - Riyadh, Kingdom of Saudi Arabia.  
+
+      <br><br>
+      🌍 Products from the Kingdom of Saudi Arabia.
+    </p>
+
+    <div class="footer" id="footerText">
+      Nihmath Al Ardh – Delivering Quality, Tradition, and Taste since the beginning.
+    </div>
+  </div>
+
+  <!-- ✅ Language Toggle -->
+  <button class="lang-btn" onclick="toggleLang()" id="langBtn">عربي</button>
+
+  <script>
+    let currentLang = localStorage.getItem("lang") || "en";
+
+    const translations = {
+      en: {
+        homeBtn: "🏠 Home",
+        heading: "About Nihmath Al Ardh",
+        aboutText: `
+          Nihmath Al Ardh is a leading food distributing company based in the Kingdom of Saudi Arabia.  
+          With a commitment to quality and trust, we specialize in bringing the best flavors to your table.  
+
+          Our operations cover a wide range of premium products:  
+          • Spices such as Cardamom, Black Pepper, and Cloves.  
+          • Nuts including Cashew, Almonds, and Walnuts.  
+          • Dalls such as Red Dal, Chana Dal, and Black Masoor.  
+
+          We proudly serve the needs of families, retailers, and businesses with products sourced and distributed with care.  
+
+          <br><br>
+          <strong>Company Details:</strong><br>
+          CR: 1010505416 <br>
+          License No: 450513926581 <br>
+          PO Box: 1083, Postal Code 11365 - Riyadh, Kingdom of Saudi Arabia.  
+
+          <br><br>
+          🌍 Products from the Kingdom of Saudi Arabia.
+        `,
+        footerText: "Nihmath Al Ardh – Delivering Quality, Tradition, and Taste since the beginning.",
+        langBtn: "عربي"
+      },
+      ar: {
+        homeBtn: "🏠 الرئيسية",
+        heading: "عن نغمات الأرض",
+        aboutText: `
+          نغمات الأرض هي شركة رائدة في توزيع المواد الغذائية مقرها المملكة العربية السعودية.  
+          ملتزمون بالجودة والثقة، ونختص في جلب أفضل النكهات إلى مائدتكم.  
+
+          تشمل عملياتنا مجموعة واسعة من المنتجات الممتازة:  
+          • التوابل مثل الهيل، والفلفل الأسود، والقرنفل.  
+          • المكسرات مثل الكاجو، واللوز، والجوز.  
+          • البقوليات مثل العدس الأحمر، والحمص، والماشور الأسود.  
+
+          نحن نخدم بفخر احتياجات العائلات والمتاجر والشركات بمنتجات يتم توريدها وتوزيعها بعناية.  
+
+          <br><br>
+          <strong>تفاصيل الشركة:</strong><br>
+          السجل التجاري: 1010505416 <br>
+          رقم الترخيص: 450513926581 <br>
+          ص.ب: 1083، الرمز البريدي 11365 - الرياض، المملكة العربية السعودية.  
+
+          <br><br>
+          🌍 منتجات من المملكة العربية السعودية.
+        `,
+        footerText: "نغمات الأرض – نقدم الجودة والتقاليد والطعم منذ البداية.",
+        langBtn: "ENG"
+      }
+    };
+
+    function applyTranslations() {
+      const t = translations[currentLang];
+      document.getElementById("homeBtn").innerText = t.homeBtn;
+      document.getElementById("heading").innerText = t.heading;
+      document.getElementById("aboutText").innerHTML = t.aboutText;
+      document.getElementById("footerText").innerText = t.footerText;
+      document.getElementById("langBtn").innerText = t.langBtn;
+      document.body.style.direction = currentLang === "ar" ? "rtl" : "ltr";
+    }
+
+    function toggleLang() {
+      currentLang = currentLang === "en" ? "ar" : "en";
+      localStorage.setItem("lang", currentLang);
+      applyTranslations();
+    }
+
+    function detectLanguage() {
+      if (!currentLang) {
+        const browserLang = navigator.language || navigator.userLanguage;
+        currentLang = browserLang.startsWith("ar") ? "ar" : "en";
+        localStorage.setItem("lang", currentLang);
+      }
+      applyTranslations();
+    }
+
+    detectLanguage();
+  </script>
+</body>
+</html>
