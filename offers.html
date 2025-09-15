@@ -96,43 +96,51 @@
     let currentImages = [];
     let currentIndex = 0;
 
-    // ✅ Sample products (only saved if none exist)
-    const sampleProducts = [
+    // ✅ Real Products (overwrite localStorage always with these)
+    const products = [
       {
-        name_en: "Red Lentils",
-        name_ar: "عدس أحمر",
-        category: "Dalls",
-        price: 15,
-        stock: 10,
-        images: ["https://via.placeholder.com/200x160?text=Red+Lentils"],
-        desc_en: "High-quality red lentils.",
-        desc_ar: "عدس أحمر عالي الجودة."
-      },
-      {
-        name_en: "Cashew Nuts",
-        name_ar: "كاجو",
+        name_en: "Almonds 180gm",
+        name_ar: "لوز 180 جم",
         category: "Nuts",
-        price: 45,
-        stock: 5,
-        images: ["https://via.placeholder.com/200x160?text=Cashew+Nuts"],
-        desc_en: "Fresh cashew nuts.",
-        desc_ar: "كاجو طازج."
+        price: 15,
+        stock: 20,
+        images: ["images/Badam.png"],
+        desc_en: "Premium quality almonds, packed fresh.",
+        desc_ar: "لوز عالي الجودة، معبأ طازج."
       },
       {
-        name_en: "Black Pepper",
-        name_ar: "فلفل أسود",
+        name_en: "Turmeric Powder 200gm",
+        name_ar: "كركم مطحون 200 جم",
         category: "Spices",
-        price: 20,
-        stock: 8,
-        images: ["https://via.placeholder.com/200x160?text=Black+Pepper"],
-        desc_en: "Strong aromatic black pepper.",
-        desc_ar: "فلفل أسود عطري قوي."
+        price: 10,
+        stock: 15,
+        images: ["images/Turmeric.png"],
+        desc_en: "Pure turmeric powder with rich aroma.",
+        desc_ar: "كركم مطحون نقي برائحة غنية."
+      },
+      {
+        name_en: "Curry Powder 200gm",
+        name_ar: "مسحوق الكاري 200 جم",
+        category: "Spices",
+        price: 12,
+        stock: 12,
+        images: ["images/Curry.png"],
+        desc_en: "Authentic curry powder for delicious dishes.",
+        desc_ar: "مسحوق كاري أصلي لأطباق لذيذة."
+      },
+      {
+        name_en: "Red Dal 400gm",
+        name_ar: "عدس أحمر 400 جم",
+        category: "Dalls",
+        price: 6,
+        stock: 25,
+        images: ["images/Red.png"],
+        desc_en: "High-quality red dal, perfect for cooking.",
+        desc_ar: "عدس أحمر عالي الجودة، مثالي للطبخ."
       }
     ];
 
-    if (!localStorage.getItem("products")) {
-      localStorage.setItem("products", JSON.stringify(sampleProducts));
-    }
+    localStorage.setItem("products", JSON.stringify(products));
 
     const translations = {
       en: {
